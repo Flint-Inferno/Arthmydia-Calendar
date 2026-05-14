@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calendar Admin — Config Editor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:      #0c0906;
+      --surface: #151009;
+      --card:    #1c1610;
+      --border:  #382c1e;
+      --border-hi:#6b4e28;
+      --text:    #e2cfa0;
+      --muted:   #8a7455;
+      --dim:     #4e4030;
+      --gold:    #c8943a;
+      --gold-hi: #e8b84b;
+      --gold-g:  rgba(200,148,58,0.12);
+      --green:   #1e4228;
+      --green-hi:#4a9a6a;
+      --red:     #5a1818;
+      --red-hi:  #c44444;
+      --r:  4px;
+      --rl: 8px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body {
+      font-family:'EB Garamond',serif;
+      background:var(--bg);
+      color:var(--text);
+      min-height:100vh;
+    }
+
+    /* ── HEADER ── */
+    .hdr {
+      background:var(--surface);
+      border-bottom:1px solid var(--border);
+      padding:0 24px;
+      height:58px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      position:sticky;top:0;z-index:10;
+    }
+    .hdr-l { display:flex; align-items:center; gap:12px; }
+    .hdr-title { font-family:'Cinzel',serif; font-size:1rem; font-weight:700; color:var(--gold-hi); }
+    .hdr-sub   { font-size:.78rem; color:var(--muted); font-style:italic; }
+    .back-link { font-size:.78rem; color:var(--muted); text-decoration:none; border:1px solid var(--border); padding:4px 11px; border-radius:var(--r); transition:all .15s; }
+    .back-link:hover { border-color:var(--gold); color:var(--gold); }
+    .auth-pill { display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--muted); }
+    .auth-dot  { width:6px;height:6px;border-radius:50%;background:var(--dim); }
+    .auth-dot.on { background:var(--green-hi); }
+    .hdr-r { display:flex;align-items:center;gap:10px; }
+
+    /* ── LAYOUT ── */
+    .page { max-width:860px; margin:0 auto; padding:28px 20px 60px; }
+
+    /* ── SECTIONS ── */
+    .sec {
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--rl);
+      padding:20px;
+      margin-bottom:20px;
+    }
+    .sec-title {
+      font-family:'Cinzel',serif;
+      font-size:.8rem;
+      font-weight:700;
+      letter-spacing:.1em;
+      text-transform:uppercase;
+      color:var(--gold);
+      margin-bottom:16px;
+      padding-bottom:10px;
+      border-bottom:1px solid var(--border);
+    }
+    .sec-desc { font-size:.82rem; color:var(--muted); font-style:italic; margin-bottom:14px; }
+
+    /* ── FORMS ── */
+    .fg { margin-bottom:12px; }
+    .fl { display:block;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px; }
+    .fl span { font-family:'EB Garamond',serif;text-transform:none;letter-spacing:0;font-style:italic;font-size:.78rem; }
+    .fi,.fsl {
+      width:100%;
+      background:var(--surface);
+      border:1px solid var(--border);
+      color:var(--text);
+      padding:7px 11px;
+      border-radius:var(--r);
+      font-family:'EB Garamond',serif;
+      font-size:.93rem;
+    }
+    .fi:focus,.fsl:focus { outline:none;border-color:var(--gold); }
+    .fsl option { background:var(--card); }
+    .frow { display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px; }
+    .frow-2 { display:grid;grid-template-columns:1fr 1fr;gap:10px; }
+
+    /* name grid (for month/week/day name lists) */
+    .name-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px; }
+    .name-item { display:flex;align-items:center;gap:7px; }
+    .name-label { font-family:'Cinzel',serif;font-size:.65rem;color:var(--muted);white-space:nowrap;min-width:60px; }
+    .name-item .fi { margin-bottom:0; }
+
+    /* date/time grid */
+    .dt-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px; }
+
+    /* info box */
+    .info-box {
+      background:rgba(200,148,58,.07);
+      border:1px solid rgba(200,148,58,.22);
+      border-radius:var(--r);
+      padding:10px 14px;
+      font-size:.8rem;
+      color:var(--muted);
+      margin-bottom:14px;
+    }
+    .info-box strong { color:var(--gold); }
+
+    /* warning */
+    .warn-box {
+      background:rgba(90,24,24,.25);
+      border:1px solid var(--red);
+      border-radius:var(--r);
+      padding:10px 14px;
+      font-size:.8rem;
+      color:#d88;
+      margin-bottom:14px;
+    }
+
+    /* ── BUTTONS ── */
+    .btn-row { display:flex;gap:8px;justify-content:flex-end;margin-top:10px; }
+    .btn {
+      font-family:'EB Garamond',serif;
+      font-size:.88rem;
+      padding:7px 18px;
+      border-radius:var(--r);
+      cursor:pointer;
+      border:1px solid var(--border);
+      transition:all .15s;
+    }
+    .btn-can  { background:none;color:var(--muted); }
+    .btn-can:hover { border-color:var(--gold);color:var(--gold); }
+    .btn-save { background:var(--gold);color:var(--bg);border-color:var(--gold);font-weight:600; }
+    .btn-save:hover { background:var(--gold-hi); }
+    .btn-danger { background:rgba(90,24,24,.3);color:var(--red-hi);border-color:var(--red); }
+    .btn-danger:hover { background:rgba(90,24,24,.6); }
+
+    .save-all-bar {
+      position:sticky;bottom:0;
+      background:var(--surface);
+      border-top:1px solid var(--border-hi);
+      padding:12px 24px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .save-status { font-size:.8rem; color:var(--muted); font-style:italic; }
+    .save-status.ok  { color:var(--green-hi); }
+    .save-status.err { color:var(--red-hi); }
+
+    /* ── TOAST ── */
+    #toasts { position:fixed;bottom:64px;right:20px;z-index:200;display:flex;flex-direction:column;gap:6px; }
+    .toast { background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:9px 14px;font-size:.8rem;animation:tin .25s ease;max-width:260px; }
+    .toast.ok  { border-color:var(--green-hi);color:var(--green-hi); }
+    .toast.err { border-color:var(--red-hi);color:var(--red-hi); }
+    .toast.inf { border-color:var(--gold);color:var(--gold); }
+    @keyframes tin{ from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1} }
+
+    /* scrollbar */
+    ::-webkit-scrollbar{width:5px}
+    ::-webkit-scrollbar-track{background:var(--bg)}
+    ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+    ::-webkit-scrollbar-thumb:hover{background:var(--border-hi)}
+
+    /* ── MODAL ── */
+    .overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(3px); }
+    .overlay.open { display:flex; }
+    .modal { background:var(--surface);border:1px solid var(--border-hi);border-radius:var(--rl);padding:24px;width:460px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.7); }
+    .modal-title { font-family:'Cinzel',serif;font-size:1rem;font-weight:600;color:var(--gold-hi);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border); }
+    .m-foot { display:flex;justify-content:flex-end;gap:8px;margin-top:16px;padding-top:12px;border-top:1px solid var(--border); }
+  </style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-l">
+    <div>
+      <div class="hdr-title">⚙ Calendar Admin</div>
+      <div class="hdr-sub">DM Config Editor — not linked from the player page</div>
+    </div>
+  </div>
+  <div class="hdr-r">
+    <div class="auth-pill"><div class="auth-dot" id="authDot"></div><span id="authLbl">Not connected</span></div>
+    <button class="btn btn-can" onclick="openModal('ghModal')">GitHub Settings</button>
+    <a href="index.html" class="back-link">← Player View</a>
+  </div>
+</header>
+
+<div class="page">
+
+  <!-- ── GITHUB REQUIRED WARNING ── -->
+  <div class="warn-box" id="ghWarn" style="display:none">
+    ⚠ <strong>Not connected.</strong> Open GitHub Settings (top right) to connect before saving.
+  </div>
+
+  <!-- ══ SECTION: Campaign Info ══════════════════════════════ -->
+  <div class="sec">
+    <div class="sec-title">Campaign Information</div>
+    <div class="fg">
+      <label class="fl">Calendar Name <span>(shown in header)</span></label>
+      <input type="text" class="fi" id="cfgName" placeholder="e.g. The Chronicle of Aethermoor">
+    </div>
+  </div>
+
+  <!-- ══ SECTION: Calendar Structure ══════════════════════════ -->
+  <div class="sec">
+    <div class="sec-title">Calendar Structure</div>
+    <div class="info-box">
+      Changing these values recalculates the entire calendar. <strong>Month and week name lists will be regenerated</strong> to match the new counts — save before changing these if you have custom names.
+    </div>
+    <div class="frow">
+      <div class="fg">
+        <label class="fl">Months per Year</label>
+        <input type="number" class="fi" id="cfgMPY" min="1" value="8" oninput="onStructureChange()">
+      </div>
+      <div class="fg">
+        <label class="fl">Weeks per Month</label>
+        <input type="number" class="fi" id="cfgWPM" min="1" value="5" oninput="onStructureChange()">
+      </div>
+      <div class="fg">
+        <label class="fl">Days per Week</label>
+        <input type="number" class="fi" id="cfgDPW" min="1" value="10" oninput="onStructureChange()">
+      </div>
+      <div class="fg">
+        <label class="fl">Hours per Day</label>
+        <input type="number" class="fi" id="cfgHPD" min="1" value="24" oninput="onStructureChange()">
+      </div>
+    </div>
+    <div class="fg" style="margin-top:4px">
+      <div style="font-size:.78rem;color:var(--muted);font-style:italic" id="structSummary"></div>
+    </div>
+  </div>
+
+  <!-- ══ SECTION: Month Names ══════════════════════════════════ -->
+  <div class="sec">
+    <div class="sec-title">Month Names</div>
+    <div class="name-grid" id="monthNames"></div>
+  </div>
+
+  <!-- ══ SECTION: Week Names ═══════════════════════════════════ -->
+  <div class="sec">
+    <div class="sec-title">Week Names <span style="font-family:'EB Garamond',serif;font-weight:400;text-transform:none;letter-spacing:0;font-size:.75rem;color:var(--muted)">— these repeat across all months</span></div>
+    <div class="name-grid" id="weekNames"></div>
+  </div>
+
+  <!-- ══ SECTION: Day Names (optional) ═════════════════════════ -->
+  <div class="sec">
+    <div class="sec-title">Day Names <span style="font-family:'EB Garamond',serif;font-weight:400;text-transform:none;letter-spacing:0;font-size:.75rem;color:var(--muted)">— optional; leave blank to use "Day 1", "Day 2"…</span></div>
+    <div class="name-grid" id="dayNames"></div>
+  </div>
+
+  <!-- ══ SECTION: Current Campaign Date/Time ═══════════════════ -->
+  <div class="sec">
+    <div class="sec-title">Current Campaign Date &amp; Time</div>
+    <div class="sec-desc">This is the "present moment" shown to players and used for time-passage calculations.</div>
+    <div class="dt-grid">
+      <div class="fg"><label class="fl">Year</label>    <input type="number" class="fi" id="curY"  min="1" value="1"></div>
+      <div class="fg"><label class="fl">Month</label>   <select class="fsl" id="curMo"></select></div>
+      <div class="fg"><label class="fl">Week</label>    <select class="fsl" id="curW"></select></div>
+      <div class="fg"><label class="fl">Day</label>     <input type="number" class="fi" id="curD"  min="1" value="1"></div>
+      <div class="fg"><label class="fl">Hour (0–23)</label> <input type="number" class="fi" id="curH"  min="0" max="23" value="8"></div>
+      <div class="fg"><label class="fl">Minute (0–59)</label><input type="number" class="fi" id="curMi" min="0" max="59" value="0"></div>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<!-- ── STICKY SAVE BAR ── -->
+<div class="save-all-bar">
+  <div class="save-status" id="saveStatus">Unsaved changes</div>
+  <div style="display:flex;gap:8px">
+    <button class="btn btn-can" onclick="reloadData()">↺ Reload</button>
+    <button class="btn btn-save" onclick="saveAll()">Save All Changes</button>
+  </div>
+</div>
+
+<!-- ── GITHUB SETTINGS MODAL ── -->
+<div class="overlay" id="ghModal">
+  <div class="modal">
+    <div class="modal-title">GitHub Connection</div>
+    <div class="fg"><label class="fl">Personal Access Token (PAT)</label><input type="password" class="fi" id="sPAT" placeholder="ghp_…"></div>
+    <div class="fg"><label class="fl">Repository Owner</label><input type="text" class="fi" id="sOwner" placeholder="username"></div>
+    <div class="fg"><label class="fl">Repository Name</label><input type="text" class="fi" id="sRepo" placeholder="campaign-calendar"></div>
+    <div class="fg"><label class="fl">Branch</label><input type="text" class="fi" id="sBranch" value="main"></div>
+    <div class="m-foot">
+      <button class="btn btn-can" onclick="closeModal('ghModal')">Cancel</button>
+      <button class="btn btn-save" onclick="saveGH()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  GITHUB
+// ═══════════════════════════════════════════════════════════
+const GH = {
+  get owner()  { return localStorage.getItem('gh_owner')  || ''; },
+  get repo()   { return localStorage.getItem('gh_repo')   || ''; },
+  get branch() { return localStorage.getItem('gh_branch') || 'main'; },
+  get pat()    { return localStorage.getItem('gh_pat')    || ''; },
+  get ok()     { return !!(this.owner && this.repo && this.pat); },
+};
+const shas = {};
+
+async function ghReq(path, method='GET', body=null) {
+  const url=`https://api.github.com/repos/${GH.owner}/${GH.repo}/contents/${path}`;
+  const hdrs={
+    'Accept':'application/vnd.github+json',
+    'X-GitHub-Api-Version':'2022-11-28',
+  };
+  if (GH.pat) hdrs['Authorization']=`Bearer ${GH.pat}`;
+  const opts={method,headers:hdrs};
+  if (body){hdrs['Content-Type']='application/json';opts.body=JSON.stringify(body);}
+  const r=await fetch(url,opts);
+  if (!r.ok){if(r.status===404)return null;throw new Error(`GitHub ${r.status}: ${await r.text()}`);}
+  return r.json();
+}
+
+async function readJSON(path) {
+  const d=await ghReq(path);
+  if(!d)return null;
+  shas[path]=d.sha;
+  return JSON.parse(atob(d.content.replace(/\n/g,'')));
+}
+
+async function writeJSON(path,data,msg) {
+  const content=btoa(unescape(encodeURIComponent(JSON.stringify(data,null,2))));
+  const body={message:msg,content,branch:GH.branch};
+  if(shas[path])body.sha=shas[path];
+  const r=await ghReq(path,'PUT',body);
+  if(r)shas[path]=r.content.sha;
+  return r;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════
+let cfg = null;
+
+const DEFAULT_CFG = {
+  calendar:{
+    name:"Campaign Calendar",
+    daysPerWeek:10, weeksPerMonth:5, monthsPerYear:8, hoursPerDay:24,
+    months:   ["Month I","Month II","Month III","Month IV","Month V","Month VI","Month VII","Month VIII"],
+    weekNames:["First Week","Second Week","Third Week","Fourth Week","Fifth Week"],
+    dayNames: []
+  },
+  currentDate:{year:1,month:0,week:0,day:1,hour:8,minute:0}
+};
+
+// ═══════════════════════════════════════════════════════════
+//  LOAD / SAVE
+// ═══════════════════════════════════════════════════════════
+async function reloadData() {
+  if(!GH.ok){toast('Connect GitHub first','err');return;}
+  setStatus('Loading…','');
+  try {
+    cfg = (await readJSON('data/config.json')) || JSON.parse(JSON.stringify(DEFAULT_CFG));
+    populateForm();
+    setStatus('Loaded from repo','ok');
+    toast('Config loaded','ok');
+  } catch(e){
+    setStatus('Load failed: '+e.message,'err');
+    toast('Load failed: '+e.message,'err');
+  }
+}
+
+async function saveAll() {
+  if(!GH.ok){toast('Connect GitHub first','err');return;}
+  cfg = buildConfig();
+  try {
+    setStatus('Saving…','');
+    await writeJSON('data/config.json', cfg, 'Update calendar config via admin');
+    setStatus('Saved successfully','ok');
+    toast('Config saved!','ok');
+  } catch(e){
+    setStatus('Save failed: '+e.message,'err');
+    toast('Save failed: '+e.message,'err');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  BUILD CONFIG FROM FORM
+// ═══════════════════════════════════════════════════════════
+function buildConfig() {
+  const mpy = +document.getElementById('cfgMPY').value||8;
+  const wpm = +document.getElementById('cfgWPM').value||5;
+  const dpw = +document.getElementById('cfgDPW').value||10;
+  const hpd = +document.getElementById('cfgHPD').value||24;
+
+  const months    = Array.from({length:mpy}, (_,i)=>(document.getElementById(`mn_${i}`)||{value:''}).value.trim()||`Month ${toRoman(i+1)}`);
+  const weekNames = Array.from({length:wpm}, (_,i)=>(document.getElementById(`wn_${i}`)||{value:''}).value.trim()||`Week ${i+1}`);
+  const dayNames  = Array.from({length:dpw}, (_,i)=>(document.getElementById(`dn_${i}`)||{value:''}).value.trim()).filter(Boolean);
+
+  const curMo = document.getElementById('curMo').value;
+  const curW  = document.getElementById('curW').value;
+
+  return {
+    calendar:{ name:document.getElementById('cfgName').value.trim()||'Campaign Calendar', daysPerWeek:dpw, weeksPerMonth:wpm, monthsPerYear:mpy, hoursPerDay:hpd, months, weekNames, dayNames },
+    currentDate:{
+      year:  +document.getElementById('curY').value ||1,
+      month: +curMo||0,
+      week:  +curW||0,
+      day:   +document.getElementById('curD').value ||1,
+      hour:  +document.getElementById('curH').value ||0,
+      minute:+document.getElementById('curMi').value||0,
+    }
+  };
+}
+
+// ═══════════════════════════════════════════════════════════
+//  POPULATE FORM FROM cfg
+// ═══════════════════════════════════════════════════════════
+function populateForm() {
+  const c=cfg.calendar;
+  document.getElementById('cfgName').value=c.name||'';
+  document.getElementById('cfgMPY').value=c.monthsPerYear;
+  document.getElementById('cfgWPM').value=c.weeksPerMonth;
+  document.getElementById('cfgDPW').value=c.daysPerWeek;
+  document.getElementById('cfgHPD').value=c.hoursPerDay;
+
+  buildNameGrids(c.monthsPerYear, c.weeksPerMonth, c.daysPerWeek);
+
+  // fill in saved names
+  c.months.forEach((m,i)=>{const el=document.getElementById(`mn_${i}`);if(el)el.value=m;});
+  c.weekNames.forEach((w,i)=>{const el=document.getElementById(`wn_${i}`);if(el)el.value=w;});
+  (c.dayNames||[]).forEach((d,i)=>{const el=document.getElementById(`dn_${i}`);if(el)el.value=d;});
+
+  // current date selects
+  rebuildDateSelects(c);
+  const cd=cfg.currentDate;
+  document.getElementById('curMo').value=cd.month;
+  document.getElementById('curW').value=cd.week||0;
+  document.getElementById('curY').value=cd.year;
+  document.getElementById('curD').value=cd.day;
+  document.getElementById('curH').value=cd.hour||0;
+  document.getElementById('curMi').value=cd.minute||0;
+
+  updateStructSummary();
+}
+
+function rebuildDateSelects(c) {
+  document.getElementById('curMo').innerHTML=
+    Array.from({length:c.monthsPerYear},(_,i)=>`<option value="${i}">${esc(c.months[i]||`Month ${i+1}`)}</option>`).join('');
+  document.getElementById('curW').innerHTML=
+    Array.from({length:c.weeksPerMonth},(_,i)=>`<option value="${i}">${esc(c.weekNames[i]||`Week ${i+1}`)}</option>`).join('');
+  document.getElementById('curD').max=c.daysPerWeek;
+}
+
+function buildNameGrids(mpy, wpm, dpw) {
+  // months
+  document.getElementById('monthNames').innerHTML =
+    Array.from({length:mpy},(_,i)=>`
+      <div class="name-item">
+        <span class="name-label">#${i+1}</span>
+        <input type="text" class="fi" id="mn_${i}" placeholder="Month ${toRoman(i+1)}">
+      </div>`).join('');
+
+  // weeks
+  document.getElementById('weekNames').innerHTML =
+    Array.from({length:wpm},(_,i)=>`
+      <div class="name-item">
+        <span class="name-label">#${i+1}</span>
+        <input type="text" class="fi" id="wn_${i}" placeholder="Week ${i+1}">
+      </div>`).join('');
+
+  // days (optional)
+  document.getElementById('dayNames').innerHTML =
+    Array.from({length:dpw},(_,i)=>`
+      <div class="name-item">
+        <span class="name-label">Day ${i+1}</span>
+        <input type="text" class="fi" id="dn_${i}" placeholder="(unnamed)">
+      </div>`).join('');
+}
+
+function onStructureChange() {
+  const mpy=+document.getElementById('cfgMPY').value||1;
+  const wpm=+document.getElementById('cfgWPM').value||1;
+  const dpw=+document.getElementById('cfgDPW').value||1;
+  buildNameGrids(mpy, wpm, dpw);
+  updateStructSummary();
+  // update date selects with placeholder names
+  const tempC={
+    monthsPerYear:mpy, weeksPerMonth:wpm, daysPerWeek:dpw,
+    months:   Array.from({length:mpy},(_,i)=>`Month ${i+1}`),
+    weekNames:Array.from({length:wpm},(_,i)=>`Week ${i+1}`),
+  };
+  rebuildDateSelects(tempC);
+}
+
+function updateStructSummary() {
+  const mpy=+document.getElementById('cfgMPY').value||0;
+  const wpm=+document.getElementById('cfgWPM').value||0;
+  const dpw=+document.getElementById('cfgDPW').value||0;
+  const hpd=+document.getElementById('cfgHPD').value||0;
+  const dpm=dpw*wpm;
+  const dpy=dpm*mpy;
+  document.getElementById('structSummary').textContent=
+    `${mpy} months × ${wpm} weeks × ${dpw} days = ${dpm} days/month, ${dpy} days/year, ${hpd} hours/day`;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SETTINGS MODAL
+// ═══════════════════════════════════════════════════════════
+function openModal(id){
+  if(id==='ghModal'){
+    document.getElementById('sPAT').value   =GH.pat;
+    document.getElementById('sOwner').value =GH.owner;
+    document.getElementById('sRepo').value  =GH.repo;
+    document.getElementById('sBranch').value=GH.branch;
+  }
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.overlay').forEach(o=>{
+  o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});
+});
+
+function saveGH(){
+  localStorage.setItem('gh_pat',  document.getElementById('sPAT').value.trim());
+  localStorage.setItem('gh_owner',document.getElementById('sOwner').value.trim());
+  localStorage.setItem('gh_repo', document.getElementById('sRepo').value.trim());
+  localStorage.setItem('gh_branch',document.getElementById('sBranch').value.trim()||'main');
+  updateAuthUI(); closeModal('ghModal');
+  toast('GitHub settings saved','inf');
+  reloadData();
+}
+
+function updateAuthUI(){
+  const on=GH.ok;
+  document.getElementById('authDot').className='auth-dot'+(on?' on':'');
+  document.getElementById('authLbl').textContent=on?'Connected':'Not connected';
+  document.getElementById('ghWarn').style.display=on?'none':'block';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════════
+function setStatus(msg,cls){
+  const el=document.getElementById('saveStatus');
+  el.textContent=msg; el.className='save-status '+cls;
+}
+function toast(msg,type='inf'){
+  const t=document.createElement('div');
+  t.className=`toast ${type}`;t.textContent=msg;
+  document.getElementById('toasts').appendChild(t);
+  setTimeout(()=>t.remove(),3500);
+}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function toRoman(n){
+  const v=[1000,900,500,400,100,90,50,40,10,9,5,4,1];
+  const s=['M','CM','D','CD','C','XC','L','XL','X','IX','V','IV','I'];
+  let r='';v.forEach((val,i)=>{while(n>=val){r+=s[i];n-=val;}});return r;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════
+updateAuthUI();
+if (GH.ok) {
+  reloadData();
+} else {
+  cfg = JSON.parse(JSON.stringify(DEFAULT_CFG));
+  populateForm();
+  setStatus('Not connected — GitHub settings required','err');
+  openModal('ghModal');
+}
+</script>
+</body>
+</html>
